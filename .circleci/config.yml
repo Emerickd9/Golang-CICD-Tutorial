@@ -5,33 +5,14 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
-    working_directory: ~/
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+  deploy-tokube:
     docker:
-      - image: circleci/golang:1.15.8
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+      - image: wecs/circle-ci-gcloud-node:0.1.0
+    working_directory: ~/
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - go-mod-v4-{{ checksum "go.sum" }}
-      - run:
-          name: install dependencies
-          command: |
-              
-              echo export GIT_COMMIT_ID=$( git log -1 --format=format:"%h" ) >> $BASH_ENV
-              echo export GIT_COMMIT_DESC=$( git log --oneline --format=%B -n 1 HEAD | head -n 1 | sed 's/^/"/;s/$/"/' ) >> $BASH_ENV
-              echo export GIT_COMMIT_AUTHOR=$( git log -1 --pretty=format:'%an' ) >> $BASH_ENV
-              echo export BACKTICK=\\\` >> $BASH_ENV
-              source $BASH_ENV
-              go mod download
-      - save_cache:
-          key: go-mod-v4-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
+      - setup_remote_docker
+      
       - run:
           name: Run build
           # mkdir -p /tmp/test-reports
@@ -43,10 +24,15 @@ jobs:
               ./deployment.sh
             fi
 
+
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  sample: # This is the name of the workflow, feel free to change it to better match your workflow.
+  deploy-tokube: # This is the name of the workflow, feel free to change it to better match your workflow.
     # Inside the workflow, you define the jobs you want to run.
     jobs:
-      - build
+      - deploy-tokube:
+        filters:
+          branches:
+            only: main
+ 
