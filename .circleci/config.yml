@@ -6,7 +6,7 @@ version: 2.1
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build:
-    working_directory: ~/repo
+    working_directory: ~/
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -19,19 +19,34 @@ jobs:
           keys:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
-          name: Install Dependencies
-          command: go mod download
+          name: install dependencies
+          command: |
+              
+              echo export GIT_COMMIT_ID=$( git log -1 --format=format:"%h" ) >> $BASH_ENV
+              echo export GIT_COMMIT_DESC=$( git log --oneline --format=%B -n 1 HEAD | head -n 1 | sed 's/^/"/;s/$/"/' ) >> $BASH_ENV
+              echo export GIT_COMMIT_AUTHOR=$( git log -1 --pretty=format:'%an' ) >> $BASH_ENV
+              echo export BACKTICK=\\\` >> $BASH_ENV
+              source $BASH_ENV
+              go mod download
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
       - run:
-          name: Run tests
+          name: Run build
+          # mkdir -p /tmp/test-reports
+          # gotestsum --junitfile /tmp/test-reports/unit-tests.xml
           command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml
-      - store_test_results:
-          path: /tmp/test-reports
+            
+            go build
+      - run:
+          name: Run Test 
+          command: 
+            go test
+            
+
+     # - store_test_results:
+        #  path: /tmp/test-reports
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
