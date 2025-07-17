@@ -1,0 +1,13 @@
+name: golangworkflow
+
+on: workflow_dispatch
+
+jobs: 
+  first_job: 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Greet the world
+        run: echo "Hello World"
+      - name: Say Goodbye
+        run: echo "Goodby World, See you soon"
+       
